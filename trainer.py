@@ -19,7 +19,7 @@ class Trainer:
     def __init__(self, model, CFG=None, loss=None, train_loader=None, val_loader=None):
         self.CFG = CFG
         if self.CFG.amp is True:
-            self.scaler = torch.cuda.amp.GradScaler(enabled=True)
+            self.scaler = torch.amp.GradScaler('cuda', enabled=True)
         self.loss = loss
         self.model = nn.DataParallel(model.cuda())
         self.train_loader = train_loader
@@ -58,7 +58,7 @@ class Trainer:
             gt = gt.cuda(non_blocking=True)
             self.optimizer.zero_grad()
             if self.CFG.amp is True:
-                with torch.cuda.amp.autocast(enabled=True):
+                with torch.amp.autocast('cuda', enabled=True):
                     pre = self.model(img)
                     loss = self.loss(pre, gt)
                 self.scaler.scale(loss).backward()
@@ -98,7 +98,7 @@ class Trainer:
                 img = img.cuda(non_blocking=True)
                 gt = gt.cuda(non_blocking=True)
                 if self.CFG.amp is True:
-                    with torch.cuda.amp.autocast(enabled=True):
+                    with torch.amp.autocast('cuda', enabled=True):
                         predict = self.model(img)
                         loss = self.loss(predict, gt)
                 else:
