@@ -1,28 +1,36 @@
 import argparse
 from bunch import Bunch
 from loguru import logger
-from ruamel.yaml import safe_load
-from torch.utils.data import DataLoader
+from ruamel import yaml
+from torch.utils.data import DataLoader, ConcatDataset
 import models
 from dataset import vessel_dataset
 from trainer import Trainer
 from utils import losses
 from utils.helpers import get_instance, seed_torch
 
-
-def main(CFG, data_path, batch_size, with_val=False):
+def main(CFG, data_paths, batch_size, with_val=False):
     seed_torch()
+
+    train_dataset = []
+    val_dataset = []
+    for data_path in data_paths:
+        if with_val:
+            train_dataset.append(vessel_dataset(data_path, mode="training", split=0.9))
+            val_dataset.append(vessel_dataset(
+                data_path, mode="training", split=0.9, is_val=True))
+        else:
+            train_dataset.append(vessel_dataset(data_path, mode="training"))
+
+
     if with_val:
-        train_dataset = vessel_dataset(data_path, mode="training", split=0.9)
-        val_dataset = vessel_dataset(
-            data_path, mode="training", split=0.9, is_val=True)
+        val_dataset = ConcatDataset(val_dataset)
         val_loader = DataLoader(
             val_dataset, batch_size, shuffle=False, num_workers=16, pin_memory=True, drop_last=False)
-    else:
-        train_dataset = vessel_dataset(data_path, mode="training")
+        
+    train_dataset = ConcatDataset(train_dataset)
     train_loader = DataLoader(
         train_dataset, batch_size, shuffle=True, num_workers=16, pin_memory=True, drop_last=True)
-
     logger.info('The patch number of train is %d' % len(train_dataset))
     model = get_instance(models, 'model', CFG)
     logger.info(f'\n{model}\n')
@@ -40,7 +48,7 @@ def main(CFG, data_path, batch_size, with_val=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-dp', '--dataset_path', default="/home/lwt/data_pro/vessel/DRIVE", type=str,
+    parser.add_argument('-dp', '--dataset_paths', default="{'datasets/DRIVE'}", type=str,
                         help='the path of dataset')
     parser.add_argument('-bs', '--batch_size', default=512,
                         help='batch_size for trianing and validation')
@@ -48,6 +56,11 @@ if __name__ == '__main__':
                         required=False, default=False, action="store_true")
     args = parser.parse_args()
 
-    with open('config.yaml', encoding='utf-8') as file:
-        CFG = Bunch(safe_load(file))
-    main(CFG, args.dataset_path, args.batch_size, args.val)
+    data_paths = eval(args.dataset_paths)
+
+    
+    with open("config.yaml", encoding="utf-8") as file:
+        yaml = yaml.YAML(typ='safe', pure=True)
+        CFG = Bunch(yaml.load(file))
+
+    main(CFG, data_paths, args.batch_size, args.val)
