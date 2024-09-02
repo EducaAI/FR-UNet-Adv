@@ -1,3 +1,6 @@
-datasets/
+datasets
 saved/
+save_picture/
+pretrained_weights/
 *.pyc
+*.json
