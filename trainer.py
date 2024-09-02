@@ -27,17 +27,11 @@ class Trainer:
         if self.CFG.amp is True:
             self.scaler = torch.amp.GradScaler('cuda', enabled=True)
         self.loss = loss
-
-        # self.model = nn.DataParallel(model.cuda())
-
         self.model = DDP(model.to(rank), device_ids=[rank], find_unused_parameters=True)
-
         self.train_loader = train_loader
         self.val_loader = val_loader
-        self.optimizer = get_instance(
-            torch.optim, "optimizer", CFG, self.model.parameters())
-        self.lr_scheduler = get_instance(
-            torch.optim.lr_scheduler, "lr_scheduler", CFG, self.optimizer)
+        self.optimizer = torch.optim.AdamW(self.model.parameters())
+        self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=40)
         start_time = datetime.now().strftime('%y%m%d%H%M%S')
         self.checkpoint_dir = os.path.join(
             CFG.save_dir, self.CFG['model']['type'], start_time)

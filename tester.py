@@ -49,6 +49,8 @@ class Tester(Trainer):
                 self.total_loss.update(loss.item())
                 self.batch_time.update(time.time() - tic)
 
+                
+
                 if self.dataset_path.endswith("DRIVE"):
                     H, W = 584, 565
                 elif self.dataset_path.endswith("CHASEDB1"):
