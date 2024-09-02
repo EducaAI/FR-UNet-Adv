@@ -13,15 +13,24 @@ from tqdm import tqdm
 from utils.helpers import dir_exists, get_instance, remove_files, double_threshold_iteration
 from utils.metrics import AverageMeter, get_metrics, get_metrics, count_connect_component
 import ttach as tta
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 class Trainer:
     def __init__(self, model, CFG=None, loss=None, train_loader=None, val_loader=None):
+
+        rank = int(os.environ['LOCAL_RANK'])
+        self.rank = rank
+
         self.CFG = CFG
         if self.CFG.amp is True:
             self.scaler = torch.amp.GradScaler('cuda', enabled=True)
         self.loss = loss
-        self.model = nn.DataParallel(model.cuda())
+
+        # self.model = nn.DataParallel(model.cuda())
+
+        self.model = DDP(model.to(rank), device_ids=[rank], find_unused_parameters=True)
+
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.optimizer = get_instance(
@@ -54,8 +63,10 @@ class Trainer:
         tic = time.time()
         for img, gt in tbar:
             self.data_time.update(time.time() - tic)
-            img = img.cuda(non_blocking=True)
-            gt = gt.cuda(non_blocking=True)
+            # img = img.cuda(non_blocking=True)
+            img = img.to(self.rank)
+            # gt = gt.cuda(non_blocking=True)
+            gt = gt.to(self.rank)
             self.optimizer.zero_grad()
             if self.CFG.amp is True:
                 with torch.amp.autocast('cuda', enabled=True):

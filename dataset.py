@@ -26,22 +26,13 @@ class vessel_dataset(Dataset):
             Fix_RandomRotation(),
         ])
 
-        self.img = []
-        self.gt = []
-
-        for idx in range(len(self.img_file)):
-            img_file = self.img_file[idx]
-            with open(file=os.path.join(self.data_path, img_file), mode='rb') as file:
-                self.img.append(torch.from_numpy(pickle.load(file)).float())
-
-            gt_file = "gt" + img_file[3:]
-            with open(file=os.path.join(self.data_path, gt_file), mode='rb') as file:
-                self.gt.append(torch.from_numpy(pickle.load(file)).float())
-
     def __getitem__(self, idx):
-        
-        img = self.img[idx]
-        gt = self.gt[idx]
+        img_file = self.img_file[idx]
+        with open(file=os.path.join(self.data_path, img_file), mode='rb') as file:
+            img = torch.from_numpy(pickle.load(file)).float()
+        gt_file = "gt" + img_file[3:]
+        with open(file=os.path.join(self.data_path, gt_file), mode='rb') as file:
+            gt = torch.from_numpy(pickle.load(file)).float()
 
         if self.mode == "training" and not self.is_val:
             seed = torch.seed()
