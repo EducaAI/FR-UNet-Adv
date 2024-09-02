@@ -49,7 +49,7 @@ def main(CFG, data_paths, batch_size, with_val=False):
     
 
     logger.info('The patch number of train is %d' % len(train_dataset))
-    model = get_instance(models, 'model', CFG)
+    model = models.FR_UNet(num_classes=1, num_channels=3)
     logger.info(f'\n{model}\n')
     loss = nn.BCEWithLogitsLoss()
     trainer = Trainer(
