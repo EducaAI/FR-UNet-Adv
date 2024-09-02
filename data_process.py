@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from PIL import Image
-from ruamel.yaml import safe_load
+from ruamel import yaml
 from torchvision.transforms import Grayscale, Normalize, ToTensor
 from utils.helpers import dir_exists, remove_files
 
@@ -195,8 +195,9 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--stride', default=6,
                         help='the stride of image partition')
     args = parser.parse_args()
-    with open('config.yaml', encoding='utf-8') as file:
-        CFG = safe_load(file)  # 为列表类型
+    with open("config.yaml", encoding="utf-8") as file:
+        yaml = yaml.YAML(typ='safe', pure=True)
+        CFG = yaml.load(file)
 
     data_process(args.dataset_path, args.dataset_name,
                  args.patch_size, args.stride, "training")
