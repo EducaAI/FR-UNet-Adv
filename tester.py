@@ -11,6 +11,7 @@ from trainer import Trainer
 from utils.helpers import dir_exists, remove_files, double_threshold_iteration
 from utils.metrics import AverageMeter, get_metrics, get_metrics, count_connect_component
 import ttach as tta
+from einops import rearrange
 
 
 class Tester(Trainer):
@@ -57,14 +58,16 @@ class Tester(Trainer):
                     img = TF.crop(img, 0, 0, H, W)
                     gt = TF.crop(gt, 0, 0, H, W)
                     pre = TF.crop(pre, 0, 0, H, W)
-                img = img[0,0,...]
+                img = img[0,...]
                 gt = gt[0,0,...]
                 pre = pre[0,0,...]
                 if self.show:
                     predict = torch.sigmoid(pre).cpu().detach().numpy()
                     predict_b = np.where(predict >= self.CFG.threshold, 1, 0)
+                    img = rearrange(np.uint8(img.cpu().numpy()*255), 'c h w -> h w c')
+                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                     cv2.imwrite(
-                        f"save_picture/img{i}.png", np.uint8(img.cpu().numpy()*255))
+                        f"save_picture/img{i}.png", img)
                     cv2.imwrite(
                         f"save_picture/gt{i}.png", np.uint8(gt.cpu().numpy()*255))
                     cv2.imwrite(

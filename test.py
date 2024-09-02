@@ -1,14 +1,14 @@
 import argparse
 import torch
 from bunch import Bunch
-from ruamel.yaml import safe_load
+from ruamel import yaml
 from torch.utils.data import DataLoader
 import models
 from dataset import vessel_dataset
 from tester import Tester
 from utils import losses
 from utils.helpers import get_instance
-
+from torch import nn
 
 def main(data_path, weight_path, CFG, show):
     checkpoint = torch.load(weight_path)
@@ -16,8 +16,8 @@ def main(data_path, weight_path, CFG, show):
     test_dataset = vessel_dataset(data_path, mode="test")
     test_loader = DataLoader(test_dataset, 1,
                              shuffle=False,  num_workers=16, pin_memory=True)
-    model = get_instance(models, 'model', CFG)
-    loss = get_instance(losses, 'loss', CFG_ck)
+    model = models.FR_UNet(num_classes=1, num_channels=3)
+    loss = nn.BCEWithLogitsLoss()
     test = Tester(model, loss, CFG, checkpoint, test_loader, data_path, show)
     test.test()
 
@@ -32,5 +32,6 @@ if __name__ == '__main__':
                         required=False, default=False, action="store_true")
     args = parser.parse_args()
     with open("config.yaml", encoding="utf-8") as file:
-        CFG = Bunch(safe_load(file))
+        yaml = yaml.YAML(typ='safe', pure=True)
+        CFG = Bunch(yaml.load(file))
     main(args.dataset_path, args.wetght_path, CFG, args.show)
