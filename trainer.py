@@ -5,6 +5,7 @@ import cv2
 import torch
 import numpy as np
 import torch.backends.cudnn as cudnn
+import torch.distributed
 import torch.nn as nn
 import torchvision.transforms.functional as TF
 from loguru import logger
@@ -52,7 +53,9 @@ class Trainer:
                 logger.info(f'## Info for epoch {epoch} ## ')
                 for k, v in results.items():
                     logger.info(f'{str(k):15s}: {v}')
-            if epoch % self.CFG.save_period == 0:
+
+            torch.distributed.barrier()
+            if epoch % self.CFG.save_period == 0 and self.rank==0:
                 self._save_checkpoint(epoch)
 
     def _train_epoch(self, epoch):
@@ -138,7 +141,7 @@ class Trainer:
         state = {
             'arch': type(self.model).__name__,
             'epoch': epoch,
-            'state_dict': self.model.state_dict(),
+            'state_dict': self.model.module.state_dict() if isinstance(self.model, DDP) else self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'config': self.CFG
         }

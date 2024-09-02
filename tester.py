@@ -20,10 +20,12 @@ class Tester(Trainer):
         self.loss = loss
         self.CFG = CFG
         self.test_loader = test_loader
-        self.model = nn.DataParallel(model.cuda())
+        self.model = model
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.model = self.model.cuda()
         self.dataset_path = dataset_path
         self.show = show
-        self.model.load_state_dict(checkpoint['state_dict'])
+        
         if self.show:
             dir_exists("save_picture")
             remove_files("save_picture")

@@ -11,7 +11,7 @@ from utils.helpers import get_instance
 from torch import nn
 
 def main(data_path, weight_path, CFG, show):
-    checkpoint = torch.load(weight_path)
+    checkpoint = torch.load(weight_path, map_location='cpu')
     CFG_ck = checkpoint['config']
     test_dataset = vessel_dataset(data_path, mode="test")
     test_loader = DataLoader(test_dataset, 1,
