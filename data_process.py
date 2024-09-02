@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from ruamel import yaml
-from torchvision.transforms import Grayscale, Normalize, ToTensor
+from torchvision.transforms import Normalize, ToTensor
 from utils.helpers import dir_exists, remove_files
 
 
@@ -39,7 +39,6 @@ def data_process(data_path, name, patch_size, stride, mode):
         if name == "DRIVE":
             img = Image.open(os.path.join(img_path, file))
             gt = Image.open(os.path.join(gt_path, file[0:2] + "_manual1.gif"))
-            img = Grayscale(1)(img)
             img_list.append(ToTensor()(img))
             gt_list.append(ToTensor()(gt))
 
@@ -49,14 +48,12 @@ def data_process(data_path, name, patch_size, stride, mode):
                     img = Image.open(os.path.join(data_path, file))
                     gt = Image.open(os.path.join(
                         data_path, file[0:9] + '_1stHO.png'))
-                    img = Grayscale(1)(img)
                     img_list.append(ToTensor()(img))
                     gt_list.append(ToTensor()(gt))
                 elif mode == "test" and int(file[6:8]) > 10:
                     img = Image.open(os.path.join(data_path, file))
                     gt = Image.open(os.path.join(
                         data_path, file[0:9] + '_1stHO.png'))
-                    img = Grayscale(1)(img)
                     img_list.append(ToTensor()(img))
                     gt_list.append(ToTensor()(gt))
         elif name == "DCA1":
@@ -108,7 +105,6 @@ def data_process(data_path, name, patch_size, stride, mode):
                 gt = Image.open(os.path.join(gt_path, file[0:6] + '.ah.ppm'))
                 cv2.imwrite(f"save_picture/{i}img.png", np.array(img))
                 cv2.imwrite(f"save_picture/{i}gt.png", np.array(gt))
-                img = Grayscale(1)(img)
                 img_list.append(ToTensor()(img))
                 gt_list.append(ToTensor()(gt))
     img_list = normalization(img_list)
@@ -133,6 +129,8 @@ def get_square(img_list, name):
         shape = 1008
     elif name == "DCA1":
         shape = 320
+    elif name == "STARE":
+        shape = 704  # DRIVE, CHASEDB01, DCA1의 shape로 미루어 16의 배수로 설정한 것으로 추정하고 설정함.
     _, h, w = img_list[0].shape
     pad = nn.ConstantPad2d((0, shape-w, 0, shape-h), 0)
     for i in range(len(img_list)):
