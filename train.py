@@ -8,8 +8,20 @@ from dataset import vessel_dataset
 from trainer import Trainer
 from utils import losses
 from utils.helpers import get_instance, seed_torch
+from torch.distributed import init_process_group, destroy_process_group
+from torch.utils.data.distributed import DistributedSampler
+import os
+from torch import nn
+
+def setup():
+    init_process_group("nccl")
+
+def cleanup():
+    """Distributed Data Parallel를 위한 종료 함수"""
+    destroy_process_group()
 
 def main(CFG, data_paths, batch_size, with_val=False):
+    setup()
     seed_torch()
 
     train_dataset = []
@@ -22,19 +34,24 @@ def main(CFG, data_paths, batch_size, with_val=False):
         else:
             train_dataset.append(vessel_dataset(data_path, mode="training"))
 
-
     if with_val:
         val_dataset = ConcatDataset(val_dataset)
-        val_loader = DataLoader(
-            val_dataset, batch_size, shuffle=False, num_workers=16, pin_memory=True, drop_last=False)
-        
+        val_sampler = DistributedSampler(val_dataset)
     train_dataset = ConcatDataset(train_dataset)
+    train_sampler = DistributedSampler(train_dataset, shuffle=True, drop_last=True)
+
+
+    if with_val:
+        val_loader = DataLoader(
+            val_dataset, batch_size, num_workers=4, pin_memory=True, sampler=val_sampler)
     train_loader = DataLoader(
-        train_dataset, batch_size, shuffle=True, num_workers=16, pin_memory=True, drop_last=True)
+        train_dataset, batch_size, num_workers=4, pin_memory=True, sampler=train_sampler)
+    
+
     logger.info('The patch number of train is %d' % len(train_dataset))
     model = get_instance(models, 'model', CFG)
     logger.info(f'\n{model}\n')
-    loss = get_instance(losses, 'loss', CFG)
+    loss = nn.BCEWithLogitsLoss()
     trainer = Trainer(
         model=model,
         loss=loss,
@@ -44,6 +61,8 @@ def main(CFG, data_paths, batch_size, with_val=False):
     )
 
     trainer.train()
+
+    cleanup()
 
 
 if __name__ == '__main__':
