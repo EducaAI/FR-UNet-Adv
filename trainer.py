@@ -60,9 +60,7 @@ class Trainer:
         tic = time.time()
         for img, gt in tbar:
             self.data_time.update(time.time() - tic)
-            # img = img.cuda(non_blocking=True)
             img = img.to(self.rank)
-            # gt = gt.cuda(non_blocking=True)
             gt = gt.to(self.rank)
             self.optimizer.zero_grad()
             if self.CFG.amp is True:
@@ -103,8 +101,8 @@ class Trainer:
         tbar = tqdm(self.val_loader, ncols=160)
         with torch.no_grad():
             for img, gt in tbar:
-                img = img.cuda(non_blocking=True)
-                gt = gt.cuda(non_blocking=True)
+                img = img.to(self.rank)
+                gt = gt.to(self.rank)
                 if self.CFG.amp is True:
                     with torch.amp.autocast('cuda', enabled=True):
                         predict = self.model(img)
