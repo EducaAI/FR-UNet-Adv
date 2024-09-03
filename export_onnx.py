@@ -27,14 +27,10 @@ def main(data_path, weight_path):
         pred = model(x)
         pred = torch.clip(pred, 0, 1)
         pred = pred.detach().clone().numpy()
-        # pred = pred > 0.5
         pred = rearrange(pred, 'n c h w -> n h w c')
         pred = pred[0,...] * 255.0
         pred = pred.astype(np.uint8)
-        print(pred.shape)
         cv2.imwrite(f'out{idx}.png', pred)
-        # img = Image.fromarray(pred)
-        # img.save(f'out{idx}.png')
 
     x = torch.randn(1, 3, 512, 512)
     print(x.shape)

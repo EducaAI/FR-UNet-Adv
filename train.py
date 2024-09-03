@@ -67,7 +67,7 @@ def main(CFG, data_paths, batch_size, with_val=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-dp', '--dataset_paths', default="{'datasets/DRIVE'}", type=str,
+    parser.add_argument('-dp', '--dataset_paths', default="{'datasets/DRIVE','datasets/STARE','datasets/CHASEDB1'}", type=str,
                         help='the path of dataset')
     parser.add_argument('-bs', '--batch_size', default=512,
                         help='batch_size for trianing and validation')

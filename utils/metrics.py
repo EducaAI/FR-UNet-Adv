@@ -55,12 +55,13 @@ def get_metrics(predict, target, threshold=None, predict_b=None):
     fp = ((1 - target) * predict_b).sum()
     fn = ((1 - predict_b) * target).sum()
     auc = roc_auc_score(target, predict)
-    acc = (tp + tn) / (tp + fp + fn + tn)
-    pre = tp / (tp + fp)
-    sen = tp / (tp + fn)
-    spe = tn / (tn + fp)
-    iou = tp / (tp + fp + fn)
-    f1 = 2 * pre * sen / (pre + sen)
+    epsilon = 1e-10
+    acc = (tp + tn) / (tp + fp + fn + tn + epsilon)
+    pre = tp / (tp + fp + epsilon)
+    sen = tp / (tp + fn + epsilon)
+    spe = tn / (tn + fp + epsilon)
+    iou = tp / (tp + fp + fn + epsilon)
+    f1 = 2 * pre * sen / (pre + sen + epsilon)
     return {
         "AUC": np.round(auc, 4),
         "F1": np.round(f1, 4),
